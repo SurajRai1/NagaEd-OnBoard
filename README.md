@@ -1,9 +1,9 @@
 # React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Use Supabase for backend ( Easier to implement )
+Or use your own custom Backend and Connect it
 
-Currently, two official plugins are available:
+Minimal Design and for Office use only
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-"# NagaEd-OnBoard" 
+Not a product but an experiment to build a web app using AI within few hours or less
+
