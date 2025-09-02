@@ -155,13 +155,13 @@ const EmployeeDetailsForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Department</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Sales">Sales</option>
+                  <option value="Engineering">IT and Development</option>
+                  <option value="Marketing">Marketing and Sales</option>
+                  <option value="Sales">Design and Creative</option>
                   <option value="HR">Human Resources</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Design">Design</option>
+                  <option value="Finance">Finance and Accounting</option>
+                  <option value="Operations">Operations and Logistics</option>
+                  <option value="Design">Learning and Training</option>
                 </select>
               </div>
 
