@@ -1,10 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import { AuthProvider } from './hooks/useAuth'
+import { EmployeeProvider } from './hooks/useEmployee' // IMPORT THE NEW PROVIDER
+import AppRouter from './components/layout/AppRouter'
 import './App.css'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+function App() {
+  return (
+    <AuthProvider>
+      <EmployeeProvider> {/* WRAP THE ROUTER */}
+        <AppRouter />
+      </EmployeeProvider>
+    </AuthProvider>
+  )
+}
+
+export default App

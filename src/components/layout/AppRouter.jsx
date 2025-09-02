@@ -28,14 +28,14 @@ const AppRouter = () => {
     <Router>
       <Routes>
         {/* Public route */}
-        <Route 
-          path="/auth" 
-          element={user ? <Navigate to="/dashboard" replace /> : <AuthForm />} 
+        <Route
+          path="/auth"
+          element={user ? <Navigate to="/dashboard" replace /> : <AuthForm />}
         />
 
         {/* Protected routes */}
-        <Route 
-          path="/onboarding" 
+        <Route
+          path="/onboarding"
           element={
             <ProtectedRoute>
               {employeeLoading ? (
@@ -51,11 +51,11 @@ const AppRouter = () => {
                 <EmployeeDetailsForm />
               )}
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               {employeeLoading ? (
@@ -71,20 +71,31 @@ const AppRouter = () => {
                 <EmployeeDashboard />
               )}
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute>
-              <AdminDashboard />
+              {employeeLoading ? (
+                 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                 <div className="text-center">
+                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                   <p className="mt-4 text-gray-600">Loading...</p>
+                 </div>
+               </div>
+              ) : employee && employee.role === 'admin' ? (
+                <AdminDashboard />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/review" 
+        <Route
+          path="/review"
           element={
             <ProtectedRoute>
               {employeeLoading ? (
@@ -104,19 +115,19 @@ const AppRouter = () => {
                 <OnboardingReviewForm />
               )}
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Default redirect */}
-        <Route 
-          path="/" 
-          element={<Navigate to={user ? "/dashboard" : "/auth"} replace />} 
+        <Route
+          path="/"
+          element={<Navigate to={user ? "/dashboard" : "/auth"} replace />}
         />
-        
+
         {/* Catch all route */}
-        <Route 
-          path="*" 
-          element={<Navigate to="/" replace />} 
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
         />
       </Routes>
     </Router>

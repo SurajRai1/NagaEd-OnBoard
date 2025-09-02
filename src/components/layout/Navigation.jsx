@@ -1,7 +1,9 @@
 import { useAuth } from '../../hooks/useAuth'
+import { useEmployee } from '../../hooks/useEmployee' // Import useEmployee
 
 const Navigation = ({ activeTab, setActiveTab }) => {
   const { user, signOut } = useAuth()
+  const { employee } = useEmployee() // Get employee data
 
   const handleSignOut = async () => {
     await signOut()
@@ -10,8 +12,13 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: 'home' },
     { id: 'progress', name: 'Progress', icon: 'chart' },
-    { id: 'admin', name: 'Admin', icon: 'cog' }
   ]
+
+  // Conditionally add the admin tab
+  if (employee && employee.role === 'admin') {
+    tabs.push({ id: 'admin', name: 'Admin', icon: 'cog' })
+  }
+
 
   const renderIcon = (iconType) => {
     switch (iconType) {

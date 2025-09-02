@@ -1,14 +1,16 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createEmployee, createEmployeeTasks } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createEmployee, createEmployeeTasks } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { useEmployee } from '../../hooks/useEmployee.jsx'; // UPDATE THIS LINE
 
 const EmployeeDetailsForm = () => {
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { refreshEmployeeData } = useEmployee();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     full_name: '',
     email: user?.email || '',
@@ -16,47 +18,48 @@ const EmployeeDetailsForm = () => {
     ifsc_code: '',
     phone_number: '',
     department: '',
-    position: ''
-  })
+    position: '',
+    role: 'employee',
+  });
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      // Create employee record
-      const { data: employee, error: employeeError } = await createEmployee({
+      const { error: employeeError } = await createEmployee({
         id: user.id,
-        ...formData
-      })
-      
-      if (employeeError) throw employeeError
+        ...formData,
+      });
+      if (employeeError) throw employeeError;
 
-      // Create tasks for the employee
-      const { error: tasksError } = await createEmployeeTasks(user.id)
-      if (tasksError) throw tasksError
+      const { error: tasksError } = await createEmployeeTasks(user.id);
+      if (tasksError) throw tasksError;
 
-      navigate('/dashboard')
+      await refreshEmployeeData();
+
     } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+      setError(err.message);
+      setLoading(false);
     }
-  }
+  };
 
+  // ... rest of the component is unchanged
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Complete Your Profile</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Complete Your Profile
+          </h1>
           <p className="text-gray-600 mt-2">Help us get to know you better</p>
         </div>
 
@@ -64,7 +67,10 @@ const EmployeeDetailsForm = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="full_name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Full Name *
                 </label>
                 <input
@@ -80,7 +86,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email Address *
                 </label>
                 <input
@@ -97,7 +106,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div>
-                <label htmlFor="bank_account_number" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="bank_account_number"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Bank Account Number *
                 </label>
                 <input
@@ -113,7 +125,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div>
-                <label htmlFor="ifsc_code" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="ifsc_code"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   IFSC Code *
                 </label>
                 <input
@@ -129,7 +144,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div>
-                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="phone_number"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Phone Number
                 </label>
                 <input
@@ -144,7 +162,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="department"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Department
                 </label>
                 <select
@@ -166,7 +187,10 @@ const EmployeeDetailsForm = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="position"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Position/Role
                 </label>
                 <input
@@ -204,7 +228,7 @@ const EmployeeDetailsForm = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EmployeeDetailsForm
+export default EmployeeDetailsForm;
