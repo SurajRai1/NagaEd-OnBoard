@@ -105,10 +105,13 @@ export const completeTask = async (employeeId, taskId, notes = '') => {
       completed: true,
       completed_at: new Date().toISOString(),
       notes
+    }, {
+      onConflict: 'employee_id,task_id' // This is the fix
     })
     .select()
   return { data, error }
 }
+
 
 export const createEmployeeTasks = async (employeeId) => {
   // Get all active tasks
