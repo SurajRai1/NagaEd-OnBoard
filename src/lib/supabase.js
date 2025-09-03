@@ -185,3 +185,26 @@ export const getAllReviews = async () => {
     .order('submitted_at', { ascending: false })
   return { data, error }
 }
+
+// Creates a new custom task, allowing a day_number to be specified
+export const createCustomTask = async (taskData) => {
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert([taskData]) // The day_number is now part of the taskData object
+    .select()
+    .single();
+  return { data, error };
+};
+
+// Assigns any task (new or existing) to a specific employee
+export const assignTaskToEmployee = async (employeeId, taskId) => {
+  const { data, error } = await supabase
+    .from('employee_tasks')
+    .insert([{
+      employee_id: employeeId,
+      task_id: taskId,
+      completed: false
+    }])
+    .select();
+  return { data, error };
+};
