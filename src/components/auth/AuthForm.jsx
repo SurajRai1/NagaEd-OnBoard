@@ -1,43 +1,44 @@
-import { useState } from 'react'
-import { useAuth } from '../../hooks/useAuth'
+import { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 const AuthForm = () => {
-  const [isSignIn, setIsSignIn] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [isSignIn, setIsSignIn] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    setSuccess('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
     try {
       if (!isSignIn && password !== confirmPassword) {
-        throw new Error('Passwords do not match')
+        throw new Error('Passwords do not match');
       }
 
       if (isSignIn) {
-        const { error } = await signIn(email, password)
-        if (error) throw error
-        setSuccess('Successfully signed in!')
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+        setSuccess('Successfully signed in!');
       } else {
-        const { error } = await signUp(email, password)
-        if (error) throw error
-        setSuccess('Account created successfully! Please check your email.')
+        // Sign up now only requires email and password
+        const { error } = await signUp(email, password);
+        if (error) throw error;
+        setSuccess('Account created! Please check your email to verify.');
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -133,9 +134,9 @@ const AuthForm = () => {
               {isSignIn ? "Don't have an account? " : "Already have an account? "}
               <button
                 onClick={() => {
-                  setIsSignIn(!isSignIn)
-                  setError('')
-                  setSuccess('')
+                  setIsSignIn(!isSignIn);
+                  setError('');
+                  setSuccess('');
                 }}
                 className="text-blue-600 hover:text-blue-500 font-medium"
               >
@@ -146,7 +147,7 @@ const AuthForm = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AuthForm
+export default AuthForm;

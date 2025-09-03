@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../hooks/useAuth'
-import { useEmployee } from '../../hooks/useEmployee'
-import WelcomeSection from './WelcomeSection'
-import OnboardingTimeline from './OnboardingTimeline'
-import DailyTasks from './DailyTasks'
-import ProgressOverview from './ProgressOverview'
-import Navigation from '../layout/Navigation'
+import { useState } from 'react';
+import { useEmployee } from '../../hooks/useEmployee';
+import WelcomeSection from './WelcomeSection';
+import OnboardingTimeline from './OnboardingTimeline';
+import DailyTasks from './DailyTasks';
+import ProgressOverview from './ProgressOverview';
+import Navigation from '../layout/Navigation';
 
 const EmployeeDashboard = () => {
-  const { user } = useAuth()
-  const { employee, tasks, loading, error, refreshEmployeeData } = useEmployee()
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const { employee, tasks, loading, error, refreshEmployeeData } = useEmployee();
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Define the tabs specifically for employees
+  const employeeTabs = [
+    { id: 'dashboard', name: 'Dashboard', icon: 'home' },
+    { id: 'progress', name: 'Progress', icon: 'chart' },
+  ];
 
   if (loading) {
     return (
@@ -20,7 +24,7 @@ const EmployeeDashboard = () => {
           <p className="mt-4 text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -28,7 +32,7 @@ const EmployeeDashboard = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Error: {error}</p>
-          <button 
+          <button
             onClick={refreshEmployeeData}
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
@@ -36,12 +40,12 @@ const EmployeeDashboard = () => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navigation tabs={employeeTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {activeTab === 'dashboard' && (
@@ -63,7 +67,7 @@ const EmployeeDashboard = () => {
         )}
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default EmployeeDashboard
+export default EmployeeDashboard;

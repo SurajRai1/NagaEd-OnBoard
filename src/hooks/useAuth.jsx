@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
@@ -25,7 +24,6 @@ export const AuthProvider = ({ children }) => {
 
     getSession()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null)
@@ -39,10 +37,15 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    signUp: async (email, password) => {
+    signUp: async (email, password, secretKey) => {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            secret_key: secretKey,
+          },
+        },
       })
       return { data, error }
     },

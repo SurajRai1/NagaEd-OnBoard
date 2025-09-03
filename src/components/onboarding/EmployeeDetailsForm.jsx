@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEmployee, createEmployeeTasks } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { useEmployee } from '../../hooks/useEmployee.jsx'; // UPDATE THIS LINE
+import { useEmployee } from '../../hooks/useEmployee.jsx';
 
 const EmployeeDetailsForm = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const EmployeeDetailsForm = () => {
     phone_number: '',
     department: '',
     position: '',
-    role: 'employee',
+    role: '', // Changed to empty to hold the secret key
   });
 
   const handleChange = (e) => {
@@ -34,25 +34,40 @@ const EmployeeDetailsForm = () => {
     setLoading(true);
     setError('');
 
+    // This is your admin secret key
+    const ADMIN_SECRET_KEY = "h7Y$k2p@X9#r!Qz3^N8dT&fJw4VbM0c*R6sL";
+    
+    // Check if the value in the 'role' field matches the secret key
+    const determinedRole = formData.role === ADMIN_SECRET_KEY ? 'admin' : 'employee';
+
     try {
+      // Create the employee with the determined role
       const { error: employeeError } = await createEmployee({
         id: user.id,
-        ...formData,
+        full_name: formData.full_name,
+        email: formData.email,
+        bank_account_number: formData.bank_account_number,
+        ifsc_code: formData.ifsc_code,
+        phone_number: formData.phone_number,
+        department: formData.department,
+        position: formData.position,
+        role: determinedRole, // Set the final role here
       });
       if (employeeError) throw employeeError;
 
+      // Assign all tasks to the new employee
       const { error: tasksError } = await createEmployeeTasks(user.id);
       if (tasksError) throw tasksError;
 
       await refreshEmployeeData();
-
+      
     } catch (err) {
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  // ... rest of the component is unchanged
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
@@ -66,6 +81,8 @@ const EmployeeDetailsForm = () => {
         <div className="bg-white rounded-lg shadow-md p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* All other input fields remain the same (full_name, email, etc.) */}
+              
               <div className="md:col-span-2">
                 <label
                   htmlFor="full_name"
@@ -201,6 +218,25 @@ const EmployeeDetailsForm = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter your position or role"
+                />
+              </div>
+
+              {/* New field for the Admin Secret Key */}
+              <div className="md:col-span-2">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Admin Secret Key (optional)
+                </label>
+                <input
+                  id="role"
+                  name="role"
+                  type="password"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter key to become an admin"
                 />
               </div>
             </div>
