@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { getAllEmployees, getAllReviews, getTasks } from '../../lib/supabase';
+import { getEmployeesWithProgress, getAllReviews, getTasks } from '../../lib/supabase';
 import EmployeesList from './EmployeesList';
 import TasksManagement from './TasksManagement';
 import ReviewsOverview from './ReviewsOverview';
 import Navigation from '../layout/Navigation';
+import AdminOverview from './AdminOverview';
+import AtRiskEmployees from './AtRiskEmployees';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('admin');
-  const [adminView, setAdminView] = useState('employees');
+  const [adminView, setAdminView] = useState('overview');
   const [employees, setEmployees] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -20,9 +22,9 @@ const AdminDashboard = () => {
   const fetchAdminData = async () => {
     try {
       setLoading(true);
-      
+
       const [employeesResult, reviewsResult, tasksResult] = await Promise.all([
-        getAllEmployees(),
+        getEmployeesWithProgress(),
         getAllReviews(),
         getTasks()
       ]);
@@ -41,10 +43,10 @@ const AdminDashboard = () => {
     }
   };
 
-  // Define the single top-level tab for the admin view
   const adminNavTabs = [{ id: 'admin', name: 'Admin', icon: 'cog' }];
 
   const adminTabs = [
+    { id: 'overview', name: 'Overview', icon: 'home' },
     { id: 'employees', name: 'Employees', icon: 'users' },
     { id: 'tasks', name: 'Tasks', icon: 'clipboard' },
     { id: 'reviews', name: 'Reviews', icon: 'star' }
@@ -52,6 +54,8 @@ const AdminDashboard = () => {
 
   const renderIcon = (iconType) => {
     switch (iconType) {
+      case 'home':
+        return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
       case 'users':
         return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>;
       case 'clipboard':
@@ -77,14 +81,13 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation tabs={adminNavTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Manage employees, tasks, and onboarding progress</p>
         </div>
 
-        {/* Admin Sub-Navigation */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
@@ -106,8 +109,13 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Admin Content */}
         <div className="space-y-6">
+          {adminView === 'overview' && (
+            <div className="space-y-6">
+              <AdminOverview employees={employees} tasks={tasks} reviews={reviews} />
+              <AtRiskEmployees employees={employees} />
+            </div>
+          )}
           {adminView === 'employees' && (
             <EmployeesList employees={employees} onRefresh={fetchAdminData} />
           )}

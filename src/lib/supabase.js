@@ -5,6 +5,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// --- All other functions (signIn, signOut, getEmployee, etc.) remain the same ---
+
 // Auth helpers
 export const signUp = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({
@@ -106,7 +108,7 @@ export const completeTask = async (employeeId, taskId, notes = '') => {
       completed_at: new Date().toISOString(),
       notes
     }, {
-      onConflict: 'employee_id,task_id' // This is the fix
+      onConflict: 'employee_id,task_id'
     })
     .select()
   return { data, error }
@@ -114,11 +116,9 @@ export const completeTask = async (employeeId, taskId, notes = '') => {
 
 
 export const createEmployeeTasks = async (employeeId) => {
-  // Get all active tasks
   const { data: tasks, error: tasksError } = await getTasks()
   if (tasksError) return { error: tasksError }
 
-  // Create employee_tasks entries for all tasks
   const employeeTasks = tasks.map(task => ({
     employee_id: employeeId,
     task_id: task.id,
@@ -140,6 +140,20 @@ export const getAllEmployees = async () => {
     .order('created_at', { ascending: false })
   return { data, error }
 }
+
+export const getEmployeesWithProgress = async () => {
+  const { data, error } = await supabase
+    .from('employees')
+    .select(`
+      *,
+      employee_tasks (
+        completed,
+        tasks ( day_number )
+      )
+    `)
+    .order('created_at', { ascending: false });
+  return { data, error };
+};
 
 export const getEmployeeProgress = async (employeeId) => {
   const { data, error } = await supabase
@@ -189,17 +203,9 @@ export const getAllReviews = async () => {
   return { data, error }
 }
 
-// Creates a new custom task, allowing a day_number to be specified
-export const createCustomTask = async (taskData) => {
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert([taskData]) // The day_number is now part of the taskData object
-    .select()
-    .single();
-  return { data, error };
-};
+// This function is no longer needed, as its logic is now in `createAndAssignTask`
+// export const createCustomTask = ...
 
-// Assigns any task (new or existing) to a specific employee
 export const assignTaskToEmployee = async (employeeId, taskId) => {
   const { data, error } = await supabase
     .from('employee_tasks')
@@ -210,4 +216,40 @@ export const assignTaskToEmployee = async (employeeId, taskId) => {
     }])
     .select();
   return { data, error };
+};
+
+// --- NEW HELPER FUNCTION ---
+// This function combines creating and assigning a task.
+export const createAndAssignTask = async (taskData, employeeId) => {
+  // 1. Create the new task in the 'tasks' table
+  const { data: createdTask, error: createTaskError } = await supabase
+    .from('tasks')
+    .insert([taskData])
+    .select()
+    .single();
+
+  if (createTaskError) {
+    console.error("Error creating task:", createTaskError);
+    return { error: createTaskError };
+  }
+
+  if (!createdTask) {
+    const error = new Error("Task created, but no data returned.");
+    console.error(error);
+    return { error };
+  }
+
+  // 2. Assign the newly created task to the employee in 'employee_tasks'
+  const { data: assignedTask, error: assignTaskError } = await assignTaskToEmployee(
+    employeeId,
+    createdTask.id
+  );
+  
+  if (assignTaskError) {
+    console.error("Error assigning task:", assignTaskError);
+    // Optional: You might want to delete the created task here if assignment fails
+    return { error: assignTaskError };
+  }
+
+  return { data: assignedTask, error: null };
 };

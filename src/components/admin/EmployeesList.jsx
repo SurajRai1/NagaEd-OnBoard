@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { getEmployeeProgress, getTasks, createCustomTask, assignTaskToEmployee } from '../../lib/supabase';
+import { useState } from 'react';
+// Import our new helper and remove createCustomTask
+import { getEmployeeProgress, getTasks, createAndAssignTask, assignTaskToEmployee } from '../../lib/supabase';
 import { calculateProgress, formatDate } from '../../utils/dateUtils';
 
 const EmployeesList = ({ employees, onRefresh }) => {
@@ -9,9 +10,14 @@ const EmployeesList = ({ employees, onRefresh }) => {
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [allTasks, setAllTasks] = useState([]);
 
-  // State for the new task assignment form
   const [selectedExistingTask, setSelectedExistingTask] = useState('');
-  const [newCustomTask, setNewCustomTask] = useState({ title: '', description: '', day_number: 1 });
+  const [newCustomTask, setNewCustomTask] = useState({ 
+    title: '', 
+    description: '', 
+    day_number: 1,
+    link_text: '',
+    link_url: ''
+  });
   const [isAssigning, setIsAssigning] = useState(false);
 
   const handleViewProgress = async (employee) => {
@@ -42,7 +48,7 @@ const EmployeesList = ({ employees, onRefresh }) => {
     setEmployeeProgress(null);
     setAllTasks([]);
     setShowAssignForm(false);
-    setNewCustomTask({ title: '', description: '', day_number: 1 });
+    setNewCustomTask({ title: '', description: '', day_number: 1, link_text: '', link_url: '' });
     setSelectedExistingTask('');
   };
 
@@ -61,29 +67,36 @@ const EmployeesList = ({ employees, onRefresh }) => {
     }
   };
 
+  // --- UPDATED HANDLER ---
   const handleCreateAndAssignTask = async (e) => {
     e.preventDefault();
-    if (!newCustomTask.title) return;
+    if (!newCustomTask.title || !selectedEmployee) return;
     setIsAssigning(true);
+    
     try {
-      // Use the new function and pass the state which includes the day_number
-      const { data: createdTask, error: createTaskError } = await createCustomTask(newCustomTask);
-      if (createTaskError) throw createTaskError;
+      // Use the single, reliable function
+      const { error } = await createAndAssignTask(newCustomTask, selectedEmployee.id);
       
-      await assignTaskToEmployee(selectedEmployee.id, createdTask.id);
-      await handleViewProgress(selectedEmployee); // Refresh progress
+      if (error) {
+        throw error; // Let the catch block handle it
+      }
+      
+      // If successful, refresh the view and close the form
+      await handleViewProgress(selectedEmployee);
+      setShowAssignForm(false);
     } catch (error) {
-      console.error('Error creating and assigning task:', error);
+      console.error('Error in create/assign process:', error.message);
+      // Optionally: show an error message to the user
     } finally {
       setIsAssigning(false);
-      setNewCustomTask({ title: '', description: '', day_number: 1 });
+      setNewCustomTask({ title: '', description: '', day_number: 1, link_text: '', link_url: '' });
     }
   };
-
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md">
+        {/* ... table header and body ... */}
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">All Employees</h2>
           <p className="text-gray-600">Manage employee onboarding progress and assign tasks</p>
@@ -95,50 +108,61 @@ const EmployeesList = ({ employees, onRefresh }) => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {employees.map(employee => (
-                <tr key={employee.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{employee.full_name}</div>
-                      <div className="text-sm text-gray-500">{employee.email}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {employee.department || 'Not specified'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(employee.start_date)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {employee.onboarding_completed ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">In Progress</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onClick={() => handleViewProgress(employee)} className="text-blue-600 hover:text-blue-900">
-                      View Progress
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {employees.map(employee => {
+                const progress = calculateProgress(employee.employee_tasks);
+                return (
+                  <tr key={employee.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{employee.full_name}</div>
+                        <div className="text-sm text-gray-500">{employee.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {employee.department || 'Not specified'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                          <div
+                            className={`h-2 rounded-full ${progress > 80 ? 'bg-green-600' : 'bg-blue-600'}`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-600">{progress}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {employee.onboarding_completed ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">In Progress</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={() => handleViewProgress(employee)} className="text-blue-600 hover:text-blue-900">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Employee Progress Modal */}
+      {/* --- MODAL SECTION (No changes to the JSX structure, only the handler function above) --- */}
       {selectedEmployee && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -167,6 +191,11 @@ const EmployeesList = ({ employees, onRefresh }) => {
                               {task.tasks.day_number ? `Day ${task.tasks.day_number}: ` : 'Ad-hoc: '}{task.tasks.title}
                             </h5>
                             <p className={`text-sm ${task.completed ? 'text-green-600' : 'text-gray-600'}`}>{task.tasks.description}</p>
+                            {task.tasks.link_url && (
+                              <a href={task.tasks.link_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline mt-1 block">
+                                {task.tasks.link_text || 'View Link'}
+                              </a>
+                            )}
                             {task.completed && task.completed_at && (<p className="text-xs text-green-600 mt-1">Completed on {formatDate(task.completed_at)}</p>)}
                           </div>
                           {task.completed && (<svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>)}
@@ -220,8 +249,24 @@ const EmployeesList = ({ employees, onRefresh }) => {
                           onChange={(e) => setNewCustomTask({...newCustomTask, description: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            placeholder="Link Text (e.g., Coursera)"
+                            value={newCustomTask.link_text}
+                            onChange={(e) => setNewCustomTask({...newCustomTask, link_text: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                          <input
+                            type="url"
+                            placeholder="Link URL (https://...)"
+                            value={newCustomTask.link_url}
+                            onChange={(e) => setNewCustomTask({...newCustomTask, link_url: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
                         <div className="flex justify-end space-x-2">
-                            <button type="button" onClick={() => setShowAssignForm(false)} className="px-4 py-2 text-gray-600">Cancel</button>
+                            <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600">Cancel</button>
                             <button type="submit" disabled={isAssigning || !newCustomTask.title} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50">{isAssigning ? '...' : 'Create & Assign'}</button>
                         </div>
                       </form>

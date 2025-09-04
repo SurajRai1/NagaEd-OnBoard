@@ -10,8 +10,24 @@ const TasksManagement = ({ tasks, onRefresh }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    day_number: 1
+    day_number: 1,
+    links: []
   })
+
+  const handleLinkChange = (index, field, value) => {
+    const newLinks = [...formData.links];
+    newLinks[index][field] = value;
+    setFormData({ ...formData, links: newLinks });
+  };
+
+  const addLink = () => {
+    setFormData({ ...formData, links: [...formData.links, { name: '', url: '' }] });
+  };
+
+  const removeLink = (index) => {
+    const newLinks = formData.links.filter((_, i) => i !== index);
+    setFormData({ ...formData, links: newLinks });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -30,7 +46,7 @@ const TasksManagement = ({ tasks, onRefresh }) => {
       }
 
       // Reset form and refresh data
-      setFormData({ title: '', description: '', day_number: 1 })
+      setFormData({ title: '', description: '', day_number: 1, links: [] })
       setShowAddForm(false)
       setEditingTask(null)
       onRefresh()
@@ -46,7 +62,8 @@ const TasksManagement = ({ tasks, onRefresh }) => {
     setFormData({
       title: task.title,
       description: task.description || '',
-      day_number: task.day_number
+      day_number: task.day_number,
+      links: task.links || []
     })
     setShowAddForm(true)
   }
@@ -54,7 +71,7 @@ const TasksManagement = ({ tasks, onRefresh }) => {
   const handleCancel = () => {
     setShowAddForm(false)
     setEditingTask(null)
-    setFormData({ title: '', description: '', day_number: 1 })
+    setFormData({ title: '', description: '', day_number: 1, links: [] })
   }
 
   // Group tasks by day
@@ -133,6 +150,43 @@ const TasksManagement = ({ tasks, onRefresh }) => {
                 </div>
               </div>
 
+              {/* Links Section */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Links</label>
+                {formData.links.map((link, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Link Name (e.g., Coursera)"
+                      value={link.name}
+                      onChange={(e) => handleLinkChange(index, 'name', e.target.value)}
+                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="url"
+                      placeholder="https://www.coursera.org"
+                      value={link.url}
+                      onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
+                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeLink(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addLink}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  + Add Link
+                </button>
+              </div>
+
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
@@ -170,6 +224,21 @@ const TasksManagement = ({ tasks, onRefresh }) => {
                           <h5 className="font-medium text-gray-900">{task.title}</h5>
                           {task.description && (
                             <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                          )}
+                           {task.links && task.links.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {task.links.map((link, index) => (
+                                <a
+                                  key={index}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {link.name}
+                                </a>
+                              ))}
+                            </div>
                           )}
                         </div>
                         <button
