@@ -5,8 +5,6 @@ const AdminOverview = ({ employees, tasks, reviews }) => {
   const completedOnboarding = employees.length - activeOnboarding;
 
   const totalTasks = tasks.length;
-  // This is a simplified calculation. For a real-world scenario, you would likely
-  // want to calculate this based on assigned employee tasks.
   const overallTaskCompletion = Math.round(
     (employees.reduce((acc, e) => acc + (e.onboarding_completed ? totalTasks : 0), 0) / (employees.length * totalTasks)) * 100
   ) || 0;
@@ -16,7 +14,7 @@ const AdminOverview = ({ employees, tasks, reviews }) => {
     : 'N/A';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {/* Active Onboarding */}
       <div className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-between">
         <div>

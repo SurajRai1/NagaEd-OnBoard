@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 const Navigation = ({ tabs, activeTab, setActiveTab }) => {
   const { user, signOut } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
   };
-  
+
   const renderIcon = (iconType) => {
     switch (iconType) {
       case 'home':
@@ -28,7 +30,7 @@ const Navigation = ({ tabs, activeTab, setActiveTab }) => {
             <h1 className="text-xl font-bold text-gray-900">NagaEd onBoard</h1>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="hidden sm:flex items-center space-x-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -40,12 +42,12 @@ const Navigation = ({ tabs, activeTab, setActiveTab }) => {
                 }`}
               >
                 {renderIcon(tab.icon)}
-                <span className="ml-2 hidden sm:inline">{tab.name}</span>
+                <span className="ml-2">{tab.name}</span>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="hidden sm:flex items-center space-x-4">
             <div className="text-sm text-gray-700">{user?.email}</div>
             <button
               onClick={handleSignOut}
@@ -54,8 +56,56 @@ const Navigation = ({ tabs, activeTab, setActiveTab }) => {
               Sign Out
             </button>
           </div>
+
+          <div className="sm:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
+
+      {isMenuOpen && (
+        <div className="sm:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsMenuOpen(false);
+                }}
+                className={`flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {renderIcon(tab.icon)}
+                <span className="ml-3">{tab.name}</span>
+              </button>
+            ))}
+          </div>
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="px-5">
+              <p className="text-sm text-gray-500">{user?.email}</p>
+            </div>
+            <div className="mt-3 px-2 space-y-1">
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

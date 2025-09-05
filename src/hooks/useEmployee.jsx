@@ -1,5 +1,5 @@
-import { useState, useEffect, createContext, useContext } from 'react';
-import { getEmployee, getEmployeeTasks } from '../lib/supabase';
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { supabase, getEmployee, getEmployeeTasks } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
 const EmployeeContext = createContext({});
@@ -19,17 +19,20 @@ export const EmployeeProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchEmployeeData = async () => {
+  const fetchEmployeeData = useCallback(async () => {
     if (!user) {
+      setEmployee(null);
+      setTasks([]);
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+      setError(null);
+
       const { data: employeeData, error: employeeError } = await getEmployee(user.id);
-      if (employeeError && employeeError.code !== 'PGRST116') { // Ignore "no rows found" error
+      if (employeeError && employeeError.code !== 'PGRST116') { // Ignore "no rows found"
         throw employeeError;
       }
       setEmployee(employeeData);
@@ -45,11 +48,41 @@ export const EmployeeProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchEmployeeData();
-  }, [user]);
+  }, [user, fetchEmployeeData]);
+
+  // --- NEW REALTIME SUBSCRIPTION ---
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen for new tasks being assigned to the current employee
+    const subscription = supabase.channel(`employee_tasks_for_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'employee_tasks',
+          filter: `employee_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Change received!', payload);
+          // When a change is detected, refresh the tasks
+          fetchEmployeeData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup function to remove the subscription when the component unmounts
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+
+  }, [user, fetchEmployeeData]);
+
 
   const value = {
     employee,

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-// Import our new helper and remove createCustomTask
 import { getEmployeeProgress, getTasks, createAndAssignTask, assignTaskToEmployee } from '../../lib/supabase';
 import { calculateProgress, formatDate } from '../../utils/dateUtils';
 
@@ -11,12 +10,14 @@ const EmployeesList = ({ employees, onRefresh }) => {
   const [allTasks, setAllTasks] = useState([]);
 
   const [selectedExistingTask, setSelectedExistingTask] = useState('');
-  const [newCustomTask, setNewCustomTask] = useState({ 
-    title: '', 
-    description: '', 
+  
+  // --- MODIFICATION 1: Changed state to match the correct data structure ---
+  const [newCustomTask, setNewCustomTask] = useState({
+    title: '',
+    description: '',
     day_number: 1,
-    link_text: '',
-    link_url: ''
+    linkName: '', // Temporary state for the link name input
+    linkUrl: ''   // Temporary state for the link URL input
   });
   const [isAssigning, setIsAssigning] = useState(false);
 
@@ -48,7 +49,8 @@ const EmployeesList = ({ employees, onRefresh }) => {
     setEmployeeProgress(null);
     setAllTasks([]);
     setShowAssignForm(false);
-    setNewCustomTask({ title: '', description: '', day_number: 1, link_text: '', link_url: '' });
+    // Reset the state
+    setNewCustomTask({ title: '', description: '', day_number: 1, linkName: '', linkUrl: '' });
     setSelectedExistingTask('');
   };
 
@@ -67,36 +69,49 @@ const EmployeesList = ({ employees, onRefresh }) => {
     }
   };
 
-  // --- UPDATED HANDLER ---
+  // --- MODIFICATION 2: Updated the handler to format the data correctly ---
   const handleCreateAndAssignTask = async (e) => {
     e.preventDefault();
     if (!newCustomTask.title || !selectedEmployee) return;
     setIsAssigning(true);
     
+    // Prepare the task data in the correct format for the database
+    const taskData = {
+      title: newCustomTask.title,
+      description: newCustomTask.description,
+      day_number: newCustomTask.day_number,
+      links: []
+    };
+
+    // If a link was provided, add it to the 'links' array
+    if (newCustomTask.linkName && newCustomTask.linkUrl) {
+      taskData.links.push({
+        name: newCustomTask.linkName,
+        url: newCustomTask.linkUrl
+      });
+    }
+
     try {
-      // Use the single, reliable function
-      const { error } = await createAndAssignTask(newCustomTask, selectedEmployee.id);
+      // Use the single, reliable function with the correctly formatted data
+      const { error } = await createAndAssignTask(taskData, selectedEmployee.id);
       
       if (error) {
-        throw error; // Let the catch block handle it
+        throw error;
       }
       
-      // If successful, refresh the view and close the form
       await handleViewProgress(selectedEmployee);
       setShowAssignForm(false);
     } catch (error) {
       console.error('Error in create/assign process:', error.message);
-      // Optionally: show an error message to the user
     } finally {
       setIsAssigning(false);
-      setNewCustomTask({ title: '', description: '', day_number: 1, link_text: '', link_url: '' });
+      setNewCustomTask({ title: '', description: '', day_number: 1, linkName: '', linkUrl: '' });
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md">
-        {/* ... table header and body ... */}
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">All Employees</h2>
           <p className="text-gray-600">Manage employee onboarding progress and assign tasks</p>
@@ -107,9 +122,9 @@ const EmployeesList = ({ employees, onRefresh }) => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Department</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -124,7 +139,7 @@ const EmployeesList = ({ employees, onRefresh }) => {
                         <div className="text-sm text-gray-500">{employee.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {employee.department || 'Not specified'}
                       </span>
@@ -140,7 +155,7 @@ const EmployeesList = ({ employees, onRefresh }) => {
                         <span className="text-sm text-gray-600">{progress}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                       {employee.onboarding_completed ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
                       ) : (
@@ -159,11 +174,10 @@ const EmployeesList = ({ employees, onRefresh }) => {
           </table>
         </div>
       </div>
-
-      {/* --- MODAL SECTION (No changes to the JSX structure, only the handler function above) --- */}
+      
       {selectedEmployee && (
          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="relative top-10 sm:top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">{selectedEmployee.full_name}'s Progress</h3>
@@ -191,9 +205,10 @@ const EmployeesList = ({ employees, onRefresh }) => {
                               {task.tasks.day_number ? `Day ${task.tasks.day_number}: ` : 'Ad-hoc: '}{task.tasks.title}
                             </h5>
                             <p className={`text-sm ${task.completed ? 'text-green-600' : 'text-gray-600'}`}>{task.tasks.description}</p>
-                            {task.tasks.link_url && (
-                              <a href={task.tasks.link_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline mt-1 block">
-                                {task.tasks.link_text || 'View Link'}
+                            {/* --- MODIFICATION 3: Read from the 'links' array to display the link --- */}
+                            {task.tasks.links && task.tasks.links.length > 0 && (
+                              <a href={task.tasks.links[0].url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline mt-1 block">
+                                {task.tasks.links[0].name || 'View Link'}
                               </a>
                             )}
                             {task.completed && task.completed_at && (<p className="text-xs text-green-600 mt-1">Completed on {formatDate(task.completed_at)}</p>)}
@@ -249,19 +264,20 @@ const EmployeesList = ({ employees, onRefresh }) => {
                           onChange={(e) => setNewCustomTask({...newCustomTask, description: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         />
+                        {/* --- MODIFICATION 4: Update input fields to use the new state properties --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <input
                             type="text"
-                            placeholder="Link Text (e.g., Coursera)"
-                            value={newCustomTask.link_text}
-                            onChange={(e) => setNewCustomTask({...newCustomTask, link_text: e.target.value})}
+                            placeholder="Link Name (e.g., Coursera)"
+                            value={newCustomTask.linkName}
+                            onChange={(e) => setNewCustomTask({...newCustomTask, linkName: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           />
                           <input
                             type="url"
                             placeholder="Link URL (https://...)"
-                            value={newCustomTask.link_url}
-                            onChange={(e) => setNewCustomTask({...newCustomTask, link_url: e.target.value})}
+                            value={newCustomTask.linkUrl}
+                            onChange={(e) => setNewCustomTask({...newCustomTask, linkUrl: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           />
                         </div>

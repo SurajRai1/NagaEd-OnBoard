@@ -8,19 +8,19 @@ const WelcomeSection = ({ employee }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Welcome, {employee.full_name}! 👋
           </h1>
           <p className="text-gray-600 mt-2">
-            {isComplete 
+            {isComplete
               ? 'Congratulations! You have completed your onboarding journey.'
               : `You started your onboarding journey on ${formatDate(employee.start_date)}`
             }
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right mt-4 sm:mt-0">
           {!isComplete && (
             <>
               <div className="text-2xl font-bold text-blue-600">{daysRemaining}</div>
@@ -37,7 +37,7 @@ const WelcomeSection = ({ employee }) => {
           )}
         </div>
       </div>
-      
+
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
           <h3 className="text-sm font-medium text-blue-800">Department</h3>

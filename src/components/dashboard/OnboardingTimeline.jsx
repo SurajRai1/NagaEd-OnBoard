@@ -5,8 +5,7 @@ const OnboardingTimeline = ({ employee, tasks }) => {
 
   const currentDay = calculateOnboardingDay(employee.start_date)
   const isComplete = isOnboardingComplete(employee.start_date)
-  
-  // Group tasks by week
+
   const weeks = []
   for (let week = 0; week < 5; week++) {
     const weekTasks = tasks.filter(task => {
@@ -18,11 +17,11 @@ const OnboardingTimeline = ({ employee, tasks }) => {
       days: Array.from({ length: 6 }, (_, day) => {
         const dayNumber = week * 6 + day + 1
         if (dayNumber > 30) return null
-        
+
         const dayTasks = weekTasks.filter(task => task.tasks?.day_number === dayNumber)
         const completed = dayTasks.every(task => task.completed)
         const hasTasks = dayTasks.length > 0
-        
+
         return {
           number: dayNumber,
           completed,
@@ -37,7 +36,7 @@ const OnboardingTimeline = ({ employee, tasks }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">30-Day Onboarding Timeline</h2>
-      
+
       <div className="space-y-6">
         {weeks.map(week => (
           <div key={week.number} className="space-y-3">
@@ -47,10 +46,10 @@ const OnboardingTimeline = ({ employee, tasks }) => {
                 <div
                   key={day.number}
                   className={`
-                    aspect-square rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all
-                    ${day.current 
-                      ? 'border-blue-500 bg-blue-100 text-blue-700 ring-2 ring-blue-200' 
-                      : day.completed 
+                    aspect-square rounded-lg border-2 flex items-center justify-center text-xs sm:text-sm font-medium transition-all
+                    ${day.current
+                      ? 'border-blue-500 bg-blue-100 text-blue-700 ring-2 ring-blue-200'
+                      : day.completed
                         ? 'border-green-500 bg-green-100 text-green-700'
                         : day.number < currentDay
                           ? 'border-gray-300 bg-gray-100 text-gray-500'
@@ -73,7 +72,7 @@ const OnboardingTimeline = ({ employee, tasks }) => {
       </div>
 
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between text-sm">
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
@@ -88,7 +87,7 @@ const OnboardingTimeline = ({ employee, tasks }) => {
               <span className="text-gray-600">Upcoming</span>
             </div>
           </div>
-          <div className="text-gray-500">
+          <div className="text-gray-500 mt-4 sm:mt-0">
             Day {Math.min(currentDay, 30)} of 30
           </div>
         </div>
