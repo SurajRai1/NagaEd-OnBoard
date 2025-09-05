@@ -7,4 +7,5 @@ function reverseString(str) {
     }
     return reverse;
 }
+const reverseString = (str) => str.reduce((acc, res )=> acc + res, 0)
 console.log(reverseString("hello"));

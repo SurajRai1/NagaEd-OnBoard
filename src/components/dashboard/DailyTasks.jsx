@@ -55,8 +55,15 @@ const DailyTasks = ({ employee, tasks, onTaskComplete }) => {
         <div className="space-y-4">
           {todaysTasks.map(employeeTask => {
             const task = employeeTask.tasks
+            if (!task) return null; // Add a guard clause in case a task is missing
+            
             const isCompleted = employeeTask.completed
             const isCompletingTask = completing[task.id]
+
+            // --- MODIFICATION: Check for both new and old link structures ---
+            const hasNewLink = task.links && Array.isArray(task.links) && task.links.length > 0;
+            const linkUrl = hasNewLink ? task.links[0].url : task.link_url;
+            const linkText = hasNewLink ? task.links[0].name : task.link_text;
 
             return (
               <div
@@ -67,7 +74,7 @@ const DailyTasks = ({ employee, tasks, onTaskComplete }) => {
                     : 'border-gray-200 bg-white hover:border-blue-300'
                 }`}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center">
                       <h3 className={`text-lg font-medium ${
@@ -82,22 +89,23 @@ const DailyTasks = ({ employee, tasks, onTaskComplete }) => {
                       )}
                     </div>
                     {task.description && (
-                      <p className={`mt-2 ${
+                      <p className={`mt-2 text-sm ${
                         isCompleted ? 'text-green-700' : 'text-gray-600'
                       }`}>
                         {task.description}
                       </p>
                     )}
                     
-                    {task.link_url && (
+                    {/* --- MODIFICATION: Use the new linkUrl and linkText variables --- */}
+                    {linkUrl && (
                       <div className="mt-3">
                         <a 
-                          href={task.link_url}
+                          href={linkUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-x-2 bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-blue-200 transition-colors"
                         >
-                          {task.link_text || 'Open Link'}
+                          {linkText || 'Open Link'}
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                             <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
@@ -131,13 +139,15 @@ const DailyTasks = ({ employee, tasks, onTaskComplete }) => {
                   </div>
                   
                   {!isCompleted && (
-                    <button
-                      onClick={() => handleCompleteTask(task.id)}
-                      disabled={isCompletingTask}
-                      className="ml-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {isCompletingTask ? 'Completing...' : 'Complete'}
-                    </button>
+                    <div className="mt-4 sm:mt-0 sm:ml-4">
+                      <button
+                        onClick={() => handleCompleteTask(task.id)}
+                        disabled={isCompletingTask}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isCompletingTask ? 'Completing...' : 'Complete'}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
